@@ -19,11 +19,15 @@ const Page: React.FC<PageProps> = ({
   onImageMove,
   onImageResize
 }) => {
+  // Using explicit pixels for A4/A5 at 96dpi to ensure HTML2Canvas captures correctly
+  // A4: 794px x 1123px
+  // A5: 559px x 794px
+  // Letter: 816px x 1056px
   const getPageStyle = () => {
     switch(settings.paperSize) {
-      case PaperSize.A5: return 'w-[559px] h-[794px]';
-      case PaperSize.Letter: return 'w-[816px] h-[1056px]';
-      default: return 'w-[794px] h-[1123px]';
+      case PaperSize.A5: return 'w-[559px] h-[794px] min-w-[559px] min-h-[794px]';
+      case PaperSize.Letter: return 'w-[816px] h-[1056px] min-w-[816px] min-h-[1056px]';
+      default: return 'w-[794px] h-[1123px] min-w-[794px] min-h-[1123px]';
     }
   };
 
@@ -35,7 +39,7 @@ const Page: React.FC<PageProps> = ({
 
   return (
     <div 
-      className={`relative bg-white page-shadow mx-auto mb-12 overflow-hidden flex flex-col ${getPageStyle()}`}
+      className={`relative bg-white page-shadow mx-auto mb-12 overflow-hidden flex flex-col page-break ${getPageStyle()}`}
       style={fontStyle}
     >
       {/* Decorative Borders (SVGs) */}

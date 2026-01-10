@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'ai', text: string}[]>([]);
   
+  // Load API Key from LocalStorage on init
   const [settings, setSettings] = useState<EditorSettings>({
     paperSize: PaperSize.A4,
     fontSize: 16,
@@ -23,7 +24,7 @@ const App: React.FC = () => {
     primaryColor: '#2563eb',
     lineHeight: 1.8,
     teacherName: '',
-    apiKey: '',
+    apiKey: typeof localStorage !== 'undefined' ? localStorage.getItem('gemini_api_key') || '' : '',
     customFontUrl: undefined
   });
 
@@ -178,12 +179,26 @@ const App: React.FC = () => {
     if (!element) return;
     
     setLoading(true);
+    
+    // Configuration specifically tuned for Pixel Perfect rendering
     const opt = {
       margin: 0,
       filename: `malzama-${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: settings.paperSize.toLowerCase(), orientation: 'portrait' }
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        scrollY: 0, // Critical: Prevents vertical shift
+        scrollX: 0,
+        windowWidth: 794 + 50, // Force width to match A4 pixel width roughly
+      },
+      jsPDF: { 
+        unit: 'px', 
+        format: [794, 1123], // Exact pixels for A4 at 96 DPI
+        orientation: 'portrait',
+        hotfixes: ['px_scaling'] 
+      },
+      pagebreak: { mode: ['css', 'legacy'] }
     };
 
     html2pdf().set(opt).from(element).save().then(() => {

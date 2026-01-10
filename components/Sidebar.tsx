@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { EditorSettings, PaperSize } from '../types';
 
 interface SidebarProps {
@@ -21,10 +21,18 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDownloadPDF, 
   onUploadFont
 }) => {
-  const [localApiKey, setLocalApiKey] = useState(settings.apiKey || '');
+  const [localApiKey, setLocalApiKey] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync local input with settings/localStorage on mount
+  useEffect(() => {
+    if (settings.apiKey) {
+      setLocalApiKey(settings.apiKey);
+    }
+  }, [settings.apiKey]);
+
   const handleConnect = () => {
+    localStorage.setItem('gemini_api_key', localApiKey);
     updateSettings({ apiKey: localApiKey });
     alert("API Key هاتە تۆمارکرن!");
   };
