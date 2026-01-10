@@ -180,7 +180,29 @@ const App: React.FC = () => {
     
     setLoading(true);
     
-    // Configuration specifically tuned for Pixel Perfect rendering
+    // 1. Clone the element to isolate it from the current view (fixes scroll/layout shifts)
+    const clone = element.cloneNode(true) as HTMLElement;
+    
+    // 2. Create a temporary container that is fixed at 0,0 and white
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.position = 'fixed';
+    pdfContainer.style.top = '0';
+    pdfContainer.style.left = '0';
+    pdfContainer.style.width = '100%';
+    pdfContainer.style.zIndex = '-9999';
+    pdfContainer.style.backgroundColor = '#ffffff';
+    
+    // 3. Clean up the clone for printing
+    const pages = clone.querySelectorAll('.page-shadow');
+    pages.forEach((p: any) => {
+        p.style.boxShadow = 'none';
+        p.style.margin = '0 auto'; 
+        p.style.marginBottom = '0'; // Remove gaps between pages for seamless PDF
+    });
+
+    pdfContainer.appendChild(clone);
+    document.body.appendChild(pdfContainer);
+
     const opt = {
       margin: 0,
       filename: `malzama-${new Date().toISOString().split('T')[0]}.pdf`,
@@ -188,23 +210,24 @@ const App: React.FC = () => {
       html2canvas: { 
         scale: 2, 
         useCORS: true, 
-        scrollY: 0, // Critical: Prevents vertical shift
+        scrollY: 0, // Reset scroll to 0 to fix "scattering"
         scrollX: 0,
-        windowWidth: 794 + 50, // Force width to match A4 pixel width roughly
+        windowWidth: 1200, // Force desktop width even on mobile
+        letterRendering: true,
       },
       jsPDF: { 
-        unit: 'px', 
-        format: [794, 1123], // Exact pixels for A4 at 96 DPI
-        orientation: 'portrait',
-        hotfixes: ['px_scaling'] 
-      },
-      pagebreak: { mode: ['css', 'legacy'] }
+        unit: 'mm', 
+        format: settings.paperSize.toLowerCase(), 
+        orientation: 'portrait' 
+      }
     };
 
-    html2pdf().set(opt).from(element).save().then(() => {
+    html2pdf().set(opt).from(clone).save().then(() => {
+        document.body.removeChild(pdfContainer);
         setLoading(false);
     }).catch((err: any) => {
         console.error("PDF Error", err);
+        if (document.body.contains(pdfContainer)) document.body.removeChild(pdfContainer);
         setLoading(false);
         alert("خەلەتەک پەیدابوو د دروستکرنا PDF دا. تکایە دووبارە بکە.");
     });
@@ -251,7 +274,7 @@ const App: React.FC = () => {
                 <div className="w-24 h-24 border-8 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
             </div>
             <p className="mt-8 text-2xl font-black text-gray-900 tracking-tight animate-pulse">
-                {sections.length > 0 ? "PDF یێ دهێتە دروستکرن..." : "زیرەکی یێ کار لسەر دکەت..."}
+                {sections.length > 0 ? "PDF یێ دهێتە دروستکرن (تکایە بووەستە)..." : "زیرەکی یێ کار لسەر دکەت..."}
             </p>
           </div>
         )}

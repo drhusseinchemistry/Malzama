@@ -21,8 +21,6 @@ const Page: React.FC<PageProps> = ({
 }) => {
   // Using explicit pixels for A4/A5 at 96dpi to ensure HTML2Canvas captures correctly
   // A4: 794px x 1123px
-  // A5: 559px x 794px
-  // Letter: 816px x 1056px
   const getPageStyle = () => {
     switch(settings.paperSize) {
       case PaperSize.A5: return 'w-[559px] h-[794px] min-w-[559px] min-h-[794px]';
@@ -43,12 +41,12 @@ const Page: React.FC<PageProps> = ({
       style={fontStyle}
     >
       {/* Decorative Borders (SVGs) */}
-      <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none opacity-20">
+      <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none opacity-20 z-0">
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0 0 L100 0 L100 10 L10 10 L10 100 L0 100 Z" fill={settings.primaryColor} />
         </svg>
       </div>
-      <div className="absolute bottom-0 right-0 w-32 h-32 pointer-events-none opacity-20 rotate-180">
+      <div className="absolute bottom-0 right-0 w-32 h-32 pointer-events-none opacity-20 rotate-180 z-0">
         <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M0 0 L100 0 L100 10 L10 10 L10 100 L0 100 Z" fill={settings.primaryColor} />
         </svg>
@@ -56,14 +54,14 @@ const Page: React.FC<PageProps> = ({
 
       {/* Main Border Frame */}
       <div 
-        className="absolute inset-6 border-2 pointer-events-none opacity-10 rounded-lg"
+        className="absolute inset-6 border-2 pointer-events-none opacity-10 rounded-lg z-0"
         style={{ borderColor: settings.primaryColor }}
       />
 
       {/* Teacher Name Box - Visible on all pages */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-4">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-4 z-10">
          <div 
-            className="px-8 py-3 border-2 rounded-xl shadow-sm bg-white/90 backdrop-blur-sm flex flex-col items-center"
+            className="px-8 py-3 border-2 rounded-xl shadow-sm bg-white flex flex-col items-center"
             style={{ borderColor: settings.primaryColor }}
           >
             <span className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-1">مامۆستا</span>
@@ -71,7 +69,7 @@ const Page: React.FC<PageProps> = ({
           </div>
       </div>
 
-      <div className="mt-28 px-16 flex-1 relative z-10">
+      <div className="mt-32 px-16 flex-1 relative z-10">
         {sections.map((section) => (
           <div key={section.id} className="mb-10 group">
             <div className="flex items-center gap-3 mb-4">
@@ -121,7 +119,7 @@ const Page: React.FC<PageProps> = ({
               window.addEventListener('mouseup', stop);
             }}
           >
-            <img src={img.src} className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-white" alt="Illustration" />
+            <img src={img.src} className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-white bg-white" alt="Illustration" />
             <div 
               className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white cursor-nwse-resize shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
               onMouseDown={(e) => {
