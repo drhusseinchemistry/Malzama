@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { EditorSettings, PaperSize } from '../types';
 
 interface SidebarProps {
@@ -19,6 +19,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   onPrint, 
   onUploadFont
 }) => {
+  const [localApiKey, setLocalApiKey] = useState(settings.apiKey || '');
+
+  const handleConnect = () => {
+    updateSettings({ apiKey: localApiKey });
+    alert("API Key هاتە تۆمارکرن!");
+  };
+
   return (
     <div className="w-80 bg-white border-l h-screen flex flex-col no-print shadow-xl z-20">
       <div className="p-8 border-b flex items-center gap-4 bg-gray-50/50">
@@ -48,6 +55,30 @@ const Sidebar: React.FC<SidebarProps> = ({
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 bg-gray-50 focus:border-blue-500 focus:outline-none transition"
             />
           </div>
+        </section>
+
+        {/* API Key Section */}
+        <section className="bg-yellow-50 p-4 rounded-2xl border border-yellow-100">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1.5 h-4 rounded-full bg-yellow-500"></div>
+            <h3 className="text-sm font-black text-gray-800">Google Gemini API</h3>
+          </div>
+          <div className="flex gap-2">
+            <input 
+              type="password" 
+              placeholder="API Key لێرە بنڤیسە"
+              value={localApiKey}
+              onChange={(e) => setLocalApiKey(e.target.value)}
+              className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:border-yellow-500 focus:outline-none transition"
+            />
+            <button 
+              onClick={handleConnect}
+              className="bg-gray-900 text-white px-3 py-2 rounded-xl font-bold text-xs whitespace-nowrap hover:bg-black transition"
+            >
+              کونێکت
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2 leading-tight">پێدڤیە کلیلا زیرەکی (API Key) هەبیت بۆ کارکرنا بەرنامەی.</p>
         </section>
 
         {/* Appearance */}

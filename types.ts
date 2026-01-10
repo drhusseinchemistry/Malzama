@@ -32,5 +32,6 @@ export interface EditorSettings {
   primaryColor: string;
   lineHeight: number;
   teacherName: string;
+  apiKey?: string;
   customFontUrl?: string;
 }

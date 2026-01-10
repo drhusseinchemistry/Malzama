@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Page from './components/Page';
 import { EditorSettings, PaperSize, MalzamaSection, FloatingImage } from './types';
@@ -21,6 +21,7 @@ const App: React.FC = () => {
     primaryColor: '#2563eb',
     lineHeight: 1.8,
     teacherName: '',
+    apiKey: '',
     customFontUrl: undefined
   });
 
@@ -75,12 +76,12 @@ const App: React.FC = () => {
     setLoading(true);
     try {
       // Prompt says "don't delete anything, just organize/format"
-      const { sections: newSections } = await processTextToSections(text);
+      const { sections: newSections } = await processTextToSections(text, settings.apiKey);
       setSections(newSections);
     } catch (error: any) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      alert(`خەلەتەک پەیدابوو: ${errorMessage}\nهیڤیە پشت راست بە کو ئەنتەرنێت هەیە و API Key دروستە.`);
+      alert(`خەلەتەک پەیدابوو: ${errorMessage}\nهیڤیە پشت راست بە کو API Key دروستە.`);
     } finally {
       setLoading(false);
     }
@@ -97,7 +98,7 @@ const App: React.FC = () => {
   const handleAskAI = async (q: string) => {
     setChatHistory(prev => [...prev, { role: 'user', text: q }]);
     try {
-        const answer = await chatWithAI(q);
+        const answer = await chatWithAI(q, settings.apiKey);
         if (answer) {
             setChatHistory(prev => [...prev, { role: 'ai', text: answer }]);
         }
@@ -122,7 +123,7 @@ const App: React.FC = () => {
     if (!desc) return;
     setLoading(true);
     try {
-      const src = await generateExplanatoryImage(desc);
+      const src = await generateExplanatoryImage(desc, settings.apiKey);
       if (src) {
         const newImg: FloatingImage = {
           id: Math.random().toString(),

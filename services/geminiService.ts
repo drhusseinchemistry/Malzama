@@ -1,13 +1,15 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Ensure process.env.API_KEY is accessed safely
-const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
+// Helper to get a configured AI instance
+const getAI = (userKey?: string) => {
+  const apiKey = userKey || (typeof process !== 'undefined' && process.env && process.env.API_KEY ? process.env.API_KEY : '');
+  if (!apiKey) throw new Error("API Key نەهاتیە دیتن. تکایە ل سایدباری API Key بنڤیسە.");
+  return new GoogleGenAI({ apiKey });
+};
 
-const ai = new GoogleGenAI({ apiKey: apiKey });
-
-export const processTextToSections = async (text: string) => {
-  if (!apiKey) throw new Error("API Key نەهاتیە دیتن. تکایە پشت راست بە کو تە API Key دانا بیت.");
+export const processTextToSections = async (text: string, apiKey?: string) => {
+  const ai = getAI(apiKey);
   
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -36,8 +38,8 @@ export const processTextToSections = async (text: string) => {
   return JSON.parse(response.text || '{"sections": []}');
 };
 
-export const generateExplanatoryImage = async (prompt: string) => {
-  if (!apiKey) throw new Error("API Key is missing");
+export const generateExplanatoryImage = async (prompt: string, apiKey?: string) => {
+  const ai = getAI(apiKey);
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -61,8 +63,8 @@ export const generateExplanatoryImage = async (prompt: string) => {
   return null;
 };
 
-export const chatWithAI = async (question: string) => {
-  if (!apiKey) throw new Error("API Key is missing");
+export const chatWithAI = async (question: string, apiKey?: string) => {
+  const ai = getAI(apiKey);
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
