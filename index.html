@@ -9,22 +9,71 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
             background-color: #f8fafc;
         }
-        @media print {
-            .no-print { display: none !important; }
-            .page-break { page-break-after: always; }
-        }
+        
+        /* Screen Styles */
         .page-shadow {
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        /* Hide scrollbars for cleaner editor */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* PRINT STYLES - THE MAGIC FOR PERFECT PDF */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+            
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            /* Hide everything that is not the printable area */
+            body * {
+                visibility: hidden;
+            }
+
+            /* Show only the print area and its children */
+            #malzama-print-area, #malzama-print-area * {
+                visibility: visible;
+            }
+
+            #malzama-print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            /* Force background graphics (colors, borders) to show */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Fix Page Breaks */
+            .page-break {
+                break-after: page !important;
+                page-break-after: always !important;
+                margin-bottom: 0 !important;
+                box-shadow: none !important;
+                height: 297mm !important; /* Force A4 height */
+                overflow: hidden !important;
+            }
+        }
     </style>
     <script>
       // Shim process.env for browser environments to prevent crashes

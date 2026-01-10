@@ -19,13 +19,13 @@ const Page: React.FC<PageProps> = ({
   onImageMove,
   onImageResize
 }) => {
-  // Using explicit pixels for A4/A5 at 96dpi to ensure HTML2Canvas captures correctly
-  // A4: 794px x 1123px
+  // Use 'mm' for print precision.
+  // A4 is 210mm x 297mm.
   const getPageStyle = () => {
     switch(settings.paperSize) {
-      case PaperSize.A5: return 'w-[559px] h-[794px] min-w-[559px] min-h-[794px]';
-      case PaperSize.Letter: return 'w-[816px] h-[1056px] min-w-[816px] min-h-[1056px]';
-      default: return 'w-[794px] h-[1123px] min-w-[794px] min-h-[1123px]';
+      case PaperSize.A5: return 'w-[148mm] h-[210mm]';
+      case PaperSize.Letter: return 'w-[216mm] h-[279mm]';
+      default: return 'w-[210mm] h-[297mm]'; // A4 Default
     }
   };
 
@@ -98,7 +98,7 @@ const Page: React.FC<PageProps> = ({
         {floatingImages.filter(img => img.pageIndex === index).map(img => (
           <div
             key={img.id}
-            className="absolute cursor-move border-2 border-transparent hover:border-blue-500 hover:scale-[1.01] transition-transform z-50 group"
+            className="absolute cursor-move border-2 border-transparent hover:border-blue-500 hover:scale-[1.01] transition-transform z-50 group no-print-border"
             style={{
               left: img.x,
               top: img.y,
@@ -120,8 +120,10 @@ const Page: React.FC<PageProps> = ({
             }}
           >
             <img src={img.src} className="w-full h-full object-cover rounded-2xl shadow-2xl border-4 border-white bg-white" alt="Illustration" />
+            
+            {/* Hide resizers during print */}
             <div 
-              className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white cursor-nwse-resize shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white cursor-nwse-resize shadow-lg opacity-0 group-hover:opacity-100 transition-opacity no-print"
               onMouseDown={(e) => {
                 e.stopPropagation();
                 const startW = img.width;

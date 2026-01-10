@@ -5,8 +5,6 @@ import Page from './components/Page';
 import { EditorSettings, PaperSize, MalzamaSection, FloatingImage } from './types';
 import { processTextToSections, generateExplanatoryImage, chatWithAI } from './services/geminiService';
 
-declare var html2pdf: any;
-
 const App: React.FC = () => {
   const [sections, setSections] = useState<MalzamaSection[]>([]);
   const [pages, setPages] = useState<MalzamaSection[][]>([]);
@@ -175,62 +173,10 @@ const App: React.FC = () => {
   };
 
   const downloadPDF = () => {
-    const element = document.getElementById('malzama-print-area');
-    if (!element) return;
-    
-    setLoading(true);
-    
-    // 1. Clone the element to isolate it from the current view (fixes scroll/layout shifts)
-    const clone = element.cloneNode(true) as HTMLElement;
-    
-    // 2. Create a temporary container that is fixed at 0,0 and white
-    const pdfContainer = document.createElement('div');
-    pdfContainer.style.position = 'fixed';
-    pdfContainer.style.top = '0';
-    pdfContainer.style.left = '0';
-    pdfContainer.style.width = '100%';
-    pdfContainer.style.zIndex = '-9999';
-    pdfContainer.style.backgroundColor = '#ffffff';
-    
-    // 3. Clean up the clone for printing
-    const pages = clone.querySelectorAll('.page-shadow');
-    pages.forEach((p: any) => {
-        p.style.boxShadow = 'none';
-        p.style.margin = '0 auto'; 
-        p.style.marginBottom = '0'; // Remove gaps between pages for seamless PDF
-    });
-
-    pdfContainer.appendChild(clone);
-    document.body.appendChild(pdfContainer);
-
-    const opt = {
-      margin: 0,
-      filename: `malzama-${new Date().toISOString().split('T')[0]}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        scrollY: 0, // Reset scroll to 0 to fix "scattering"
-        scrollX: 0,
-        windowWidth: 1200, // Force desktop width even on mobile
-        letterRendering: true,
-      },
-      jsPDF: { 
-        unit: 'mm', 
-        format: settings.paperSize.toLowerCase(), 
-        orientation: 'portrait' 
-      }
-    };
-
-    html2pdf().set(opt).from(clone).save().then(() => {
-        document.body.removeChild(pdfContainer);
-        setLoading(false);
-    }).catch((err: any) => {
-        console.error("PDF Error", err);
-        if (document.body.contains(pdfContainer)) document.body.removeChild(pdfContainer);
-        setLoading(false);
-        alert("خەلەتەک پەیدابوو د دروستکرنا PDF دا. تکایە دووبارە بکە.");
-    });
+    // Using window.print() invokes the browser's native PDF generator.
+    // This provides Vector text (selectable, crisp), perfect layout matching,
+    // and is 100% reliable compared to JS-based screenshot libraries.
+    window.print();
   };
 
   return (
@@ -247,7 +193,7 @@ const App: React.FC = () => {
 
       <main className="flex-1 overflow-y-auto p-12 relative no-scrollbar bg-slate-100">
         {sections.length === 0 && !loading && (
-          <div className="max-w-3xl mx-auto mt-20 p-12 bg-white rounded-[40px] shadow-2xl border border-white">
+          <div className="max-w-3xl mx-auto mt-20 p-12 bg-white rounded-[40px] shadow-2xl border border-white no-print">
             <h2 className="text-4xl font-black text-gray-900 mb-6 text-center">چێکرنا مەلزەمێ ب شێوازەکێ مودرێن</h2>
             <p className="text-gray-500 mb-10 text-center text-lg">نڤیسینا خۆ ل ڤێرە دانێ دا مامۆستایێ زیرەک بۆتە رێک بێخیت و دیزاینەکا جوان بدەتێ.</p>
             <textarea 
@@ -268,13 +214,13 @@ const App: React.FC = () => {
         )}
 
         {loading && (
-          <div className="fixed inset-0 z-[100] bg-white/90 backdrop-blur-xl flex flex-col items-center justify-center">
+          <div className="fixed inset-0 z-[100] bg-white/90 backdrop-blur-xl flex flex-col items-center justify-center no-print">
             <div className="relative">
                 <div className="w-24 h-24 border-8 border-blue-100 rounded-full"></div>
                 <div className="w-24 h-24 border-8 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
             </div>
             <p className="mt-8 text-2xl font-black text-gray-900 tracking-tight animate-pulse">
-                {sections.length > 0 ? "PDF یێ دهێتە دروستکرن (تکایە بووەستە)..." : "زیرەکی یێ کار لسەر دکەت..."}
+                {sections.length > 0 ? "PDF یێ دهێتە دروستکرن..." : "زیرەکی یێ کار لسەر دکەت..."}
             </p>
           </div>
         )}
