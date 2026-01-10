@@ -1,9 +1,14 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Ensure process.env.API_KEY is accessed safely
+const apiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
+
+const ai = new GoogleGenAI({ apiKey: apiKey });
 
 export const processTextToSections = async (text: string) => {
+  if (!apiKey) throw new Error("API Key نەهاتیە دیتن. تکایە پشت راست بە کو تە API Key دانا بیت.");
+  
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `ژمێریارەکا نڤیسینێ یە. ئەڤێ نڤیسینێ وەکی بابەت (Sections) لێک بدە دناڤ JSON دا کو هەر بابەتەک ناڤنیشانەک و ناڤەرۆکەکا تێروەسەل هەبیت: \n\n ${text}`,
@@ -32,6 +37,8 @@ export const processTextToSections = async (text: string) => {
 };
 
 export const generateExplanatoryImage = async (prompt: string) => {
+  if (!apiKey) throw new Error("API Key is missing");
+
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: {
@@ -55,6 +62,8 @@ export const generateExplanatoryImage = async (prompt: string) => {
 };
 
 export const chatWithAI = async (question: string) => {
+  if (!apiKey) throw new Error("API Key is missing");
+
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: question,

@@ -25,6 +25,12 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
+    <script>
+      // Shim process.env for browser environments to prevent crashes
+      if (typeof process === "undefined") {
+        window.process = { env: { API_KEY: "" } };
+      }
+    </script>
     <script type="importmap">
 {
   "imports": {

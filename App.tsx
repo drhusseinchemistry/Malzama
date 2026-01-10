@@ -77,9 +77,10 @@ const App: React.FC = () => {
       // Prompt says "don't delete anything, just organize/format"
       const { sections: newSections } = await processTextToSections(text);
       setSections(newSections);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("خەلەتەک پەیدابوو.");
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert(`خەلەتەک پەیدابوو: ${errorMessage}\nهیڤیە پشت راست بە کو ئەنتەرنێت هەیە و API Key دروستە.`);
     } finally {
       setLoading(false);
     }
@@ -95,9 +96,14 @@ const App: React.FC = () => {
 
   const handleAskAI = async (q: string) => {
     setChatHistory(prev => [...prev, { role: 'user', text: q }]);
-    const answer = await chatWithAI(q);
-    if (answer) {
-      setChatHistory(prev => [...prev, { role: 'ai', text: answer }]);
+    try {
+        const answer = await chatWithAI(q);
+        if (answer) {
+            setChatHistory(prev => [...prev, { role: 'ai', text: answer }]);
+        }
+    } catch (error: any) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        setChatHistory(prev => [...prev, { role: 'ai', text: `خەلەتەک: ${errorMessage}` }]);
     }
   };
 
@@ -128,7 +134,12 @@ const App: React.FC = () => {
           pageIndex: 0
         };
         setFloatingImages(prev => [...prev, newImg]);
+      } else {
+        alert("نەشیا وێنەی دروست بکەت.");
       }
+    } catch (error: any) {
+        console.error(error);
+        alert(`خەلەتیا وێنەی: ${error.message}`);
     } finally {
       setLoading(false);
     }
