@@ -5,6 +5,8 @@ import Page from './components/Page';
 import { EditorSettings, PaperSize, MalzamaSection, FloatingImage } from './types';
 import { processTextToSections, generateExplanatoryImage, chatWithAI } from './services/geminiService';
 
+declare var html2pdf: any;
+
 const App: React.FC = () => {
   const [sections, setSections] = useState<MalzamaSection[]>([]);
   const [pages, setPages] = useState<MalzamaSection[][]>([]);
@@ -45,14 +47,13 @@ const App: React.FC = () => {
   }, [settings.customFontUrl]);
 
   const paginate = useCallback((allSections: MalzamaSection[]) => {
-    // Better approximation for pagination
     const charsPerPage = settings.paperSize === PaperSize.A4 ? 1800 : settings.paperSize === PaperSize.A5 ? 900 : 1600;
     const result: MalzamaSection[][] = [];
     let currentPage: MalzamaSection[] = [];
     let currentCharCount = 0;
 
     allSections.forEach(section => {
-      const sectionLength = section.content.length + section.title.length + 200; // Buffer for headers
+      const sectionLength = section.content.length + section.title.length + 200;
       if (currentCharCount + sectionLength > charsPerPage && currentPage.length > 0) {
         result.push(currentPage);
         currentPage = [section];
@@ -75,7 +76,6 @@ const App: React.FC = () => {
     if (!text.trim()) return;
     setLoading(true);
     try {
-      // Prompt says "don't delete anything, just organize/format"
       const { sections: newSections } = await processTextToSections(text, settings.apiKey);
       setSections(newSections);
     } catch (error: any) {
@@ -92,6 +92,28 @@ const App: React.FC = () => {
     if (file) {
       const url = URL.createObjectURL(file);
       setSettings(prev => ({ ...prev, customFontUrl: url }));
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            if (event.target?.result) {
+                const newImg: FloatingImage = {
+                    id: Math.random().toString(),
+                    src: event.target.result as string,
+                    x: 200,
+                    y: 300,
+                    width: 300,
+                    height: 300,
+                    pageIndex: 0
+                };
+                setFloatingImages(prev => [...prev, newImg]);
+            }
+        };
+        reader.readAsDataURL(file);
     }
   };
 
@@ -136,14 +158,41 @@ const App: React.FC = () => {
         };
         setFloatingImages(prev => [...prev, newImg]);
       } else {
-        alert("نەشیا وێنەی دروست بکەت.");
+        alert("نەشیا وێنەی دروست بکەت. تکایە دووبارە بکە.");
       }
     } catch (error: any) {
         console.error(error);
-        alert(`خەلەتیا وێنەی: ${error.message}`);
+        const isQuota = error.message?.includes("429") || error.message?.includes("Quota") || error.message?.includes("RESOURCE_EXHAUSTED");
+        if (isQuota) {
+            alert("بوورە، باڵانسا بەلاش یا Google AI ب دوماهیک هات. تکایە کێمەکێ بووەستە یان وێنەی ژ لایێ خۆ ئەپلۆد بکە ب رێکا دوکمەیا 'ئەپلۆدکرنا وێنەی'.");
+        } else {
+            alert(`خەلەتیا وێنەی: ${error.message}`);
+        }
     } finally {
       setLoading(false);
     }
+  };
+
+  const downloadPDF = () => {
+    const element = document.getElementById('malzama-print-area');
+    if (!element) return;
+    
+    setLoading(true);
+    const opt = {
+      margin: 0,
+      filename: `malzama-${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: settings.paperSize.toLowerCase(), orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        setLoading(false);
+    }).catch((err: any) => {
+        console.error("PDF Error", err);
+        setLoading(false);
+        alert("خەلەتەک پەیدابوو د دروستکرنا PDF دا. تکایە دووبارە بکە.");
+    });
   };
 
   return (
@@ -152,12 +201,13 @@ const App: React.FC = () => {
         settings={settings} 
         updateSettings={(s) => setSettings(prev => ({ ...prev, ...s }))}
         onGenerateImage={createAIImage}
+        onUploadImage={handleImageUpload}
         onAskAI={() => setShowChat(true)}
-        onPrint={() => window.print()}
+        onDownloadPDF={downloadPDF}
         onUploadFont={handleFontUpload}
       />
 
-      <main className="flex-1 overflow-y-auto p-12 no-print relative no-scrollbar">
+      <main className="flex-1 overflow-y-auto p-12 relative no-scrollbar bg-slate-100">
         {sections.length === 0 && !loading && (
           <div className="max-w-3xl mx-auto mt-20 p-12 bg-white rounded-[40px] shadow-2xl border border-white">
             <h2 className="text-4xl font-black text-gray-900 mb-6 text-center">چێکرنا مەلزەمێ ب شێوازەکێ مودرێن</h2>
@@ -185,11 +235,13 @@ const App: React.FC = () => {
                 <div className="w-24 h-24 border-8 border-blue-100 rounded-full"></div>
                 <div className="w-24 h-24 border-8 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
             </div>
-            <p className="mt-8 text-2xl font-black text-gray-900 tracking-tight animate-pulse">زیرەکی یێ کار لسەر دکەت...</p>
+            <p className="mt-8 text-2xl font-black text-gray-900 tracking-tight animate-pulse">
+                {sections.length > 0 ? "PDF یێ دهێتە دروستکرن..." : "زیرەکی یێ کار لسەر دکەت..."}
+            </p>
           </div>
         )}
 
-        <div className="flex flex-col items-center pb-20">
+        <div className="flex flex-col items-center pb-20" id="malzama-print-area">
           {pages.map((pageSections, i) => (
             <Page 
               key={i}
@@ -201,20 +253,23 @@ const App: React.FC = () => {
               onImageResize={(id, width, height) => setFloatingImages(prev => prev.map(img => img.id === id ? { ...img, width, height } : img))}
             />
           ))}
-          {pages.length > 0 && (
-             <button 
-                onClick={() => setSections(prev => [...prev, { id: Math.random().toString(), title: "بابەتەکێ نوو", content: "ل ڤێرە بنڤیسە..." }])}
-                className="mt-4 px-8 py-3 bg-white text-gray-900 rounded-full font-bold shadow-lg border hover:bg-gray-50 transition no-print"
-             >
-                + زێدەکرنا لاپەرەکێ دی
-             </button>
-          )}
         </div>
+        
+        {pages.length > 0 && (
+             <div className="text-center no-print">
+                 <button 
+                    onClick={() => setSections(prev => [...prev, { id: Math.random().toString(), title: "بابەتەکێ نوو", content: "ل ڤێرە بنڤیسە..." }])}
+                    className="mt-4 px-8 py-3 bg-white text-gray-900 rounded-full font-bold shadow-lg border hover:bg-gray-50 transition"
+                >
+                    + زێدەکرنا لاپەرەکێ دی
+                </button>
+             </div>
+        )}
       </main>
 
       {/* AI Chat Modal */}
       {showChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-md px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-md px-4 no-print">
           <div className="bg-white w-full max-w-2xl h-[750px] rounded-[40px] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden transform transition-all animate-in fade-in zoom-in duration-300">
             <div className="p-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex justify-between items-center">
               <div>

@@ -1,13 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { EditorSettings, PaperSize } from '../types';
 
 interface SidebarProps {
   settings: EditorSettings;
   updateSettings: (s: Partial<EditorSettings>) => void;
   onGenerateImage: () => void;
+  onUploadImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAskAI: () => void;
-  onPrint: () => void;
+  onDownloadPDF: () => void;
   onUploadFont: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -15,11 +16,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   settings, 
   updateSettings, 
   onGenerateImage, 
+  onUploadImage,
   onAskAI, 
-  onPrint, 
+  onDownloadPDF, 
   onUploadFont
 }) => {
   const [localApiKey, setLocalApiKey] = useState(settings.apiKey || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleConnect = () => {
     updateSettings({ apiKey: localApiKey });
@@ -143,18 +146,35 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </section>
 
-        {/* AI Buttons */}
+        {/* AI & Image Buttons */}
         <section className="space-y-3 pt-4">
             <button 
               onClick={onGenerateImage}
               className="flex items-center justify-between w-full px-5 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:shadow-2xl transition group"
             >
-              <span>وێنەکێ نوو چێکە</span>
+              <span>وێنەکێ نوو چێکە (AI)</span>
               <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center group-hover:bg-white/20">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" /></svg>
               </div>
             </button>
             
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center justify-between w-full px-5 py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 transition group"
+            >
+              <span>ئەپلۆدکرنا وێنەی</span>
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+              </div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*"
+                onChange={onUploadImage} 
+              />
+            </button>
+
             <button 
               onClick={onAskAI}
               className="flex items-center justify-between w-full px-5 py-4 border-2 border-gray-100 text-gray-900 rounded-2xl font-bold hover:bg-gray-50 transition"
@@ -167,10 +187,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="p-8">
           <button 
-            onClick={onPrint}
-            className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black shadow-xl shadow-blue-200 hover:bg-blue-700 transition active:scale-95"
+            onClick={onDownloadPDF}
+            className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black shadow-xl shadow-blue-200 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-2"
           >
-            خەزن کرن و پرنت
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            داونلۆدکرنا PDF
           </button>
       </div>
     </div>
