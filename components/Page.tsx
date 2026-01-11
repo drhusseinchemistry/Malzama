@@ -125,8 +125,9 @@ const Page: React.FC<PageProps> = ({
 
   return (
     <div 
-      className={`relative bg-white page-shadow mx-auto mb-12 overflow-hidden flex flex-col page-break ${getPageStyle()}`}
+      className={`malzama-page-container relative bg-white page-shadow mx-auto mb-12 overflow-hidden flex flex-col page-break ${getPageStyle()}`}
       style={fontStyle}
+      data-page-index={index}
     >
       {/* Decorative Borders (SVGs) */}
       <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none opacity-20 z-0">

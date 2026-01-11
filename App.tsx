@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Page from './components/Page';
 import { EditorSettings, PaperSize, MalzamaSection, FloatingImage, FloatingText } from './types';
@@ -15,8 +15,12 @@ const App: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'ai', text: string}[]>([]);
   const [isListening, setIsListening] = useState(false);
-  const [isSidebarOpen, setSidebarOpen] = useState(false); // Sidebar closed by default
-  const [micLang, setMicLang] = useState('ckb-IQ'); // Default to Kurdish
+  const [isSidebarOpen, setSidebarOpen] = useState(false); 
+  const [micLang, setMicLang] = useState('ckb-IQ');
+  
+  // New States for User Request
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [activePageIndex, setActivePageIndex] = useState(0);
   
   // Load API Key from LocalStorage on init
   const [settings, setSettings] = useState<EditorSettings>({
@@ -75,6 +79,23 @@ const App: React.FC = () => {
     paginate(sections);
   }, [sections, settings.paperSize, paginate]);
 
+  // Active Page Detection (Scroll Observer)
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const index = parseInt(entry.target.getAttribute('data-page-index') || '0');
+            setActivePageIndex(index);
+        }
+      });
+    }, { threshold: 0.4 }); // Trigger when 40% of page is visible
+
+    const pageElements = document.querySelectorAll('.malzama-page-container');
+    pageElements.forEach(el => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [pages, zoomLevel]); // Re-run when pages or zoom changes
+
   const handleTextSubmit = async (text: string) => {
     if (!text.trim()) return;
     setLoading(true);
@@ -112,9 +133,10 @@ const App: React.FC = () => {
                     width: 300,
                     height: 300,
                     rotation: 0,
-                    pageIndex: 0
+                    pageIndex: activePageIndex // Add to currently visible page
                 };
                 setFloatingImages(prev => [...prev, newImg]);
+                alert(`وێنە ل لاپەرە ${activePageIndex + 1} هاتە زێدەکرن`);
             }
         };
         reader.readAsDataURL(file);
@@ -132,7 +154,7 @@ const App: React.FC = () => {
         width: 150,
         height: 150,
         rotation: 0,
-        pageIndex: 0
+        pageIndex: activePageIndex // Add to currently visible page
     };
     setFloatingImages(prev => [...prev, newImg]);
     setSidebarOpen(false);
@@ -149,7 +171,7 @@ const App: React.FC = () => {
         rotation: 0,
         fontSize: 18,
         color: '#000000',
-        pageIndex: 0
+        pageIndex: activePageIndex // Add to currently visible page
     };
     setFloatingTexts(prev => [...prev, newText]);
     setSidebarOpen(false);
@@ -186,11 +208,11 @@ const App: React.FC = () => {
           x: 100,
           y: 200,
           width: 250,
-          height: 100, // height might auto-adjust but initial box
+          height: 100,
           rotation: 0,
           fontSize: 18,
           color: '#000000',
-          pageIndex: 0
+          pageIndex: activePageIndex // Add to currently visible page
         };
         setFloatingTexts(prev => [...prev, newText]);
       }
@@ -243,7 +265,7 @@ const App: React.FC = () => {
           width: 350,
           height: 350,
           rotation: 0,
-          pageIndex: 0
+          pageIndex: activePageIndex // Add to currently visible page
         };
         setFloatingImages(prev => [...prev, newImg]);
       } else {
@@ -320,6 +342,33 @@ const App: React.FC = () => {
       />
 
       <main className="flex-1 overflow-y-auto p-4 md:p-12 relative no-scrollbar bg-slate-100 transition-all duration-300">
+        
+        {/* Floating Zoom & Page Controls */}
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 bg-white/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border border-gray-200 no-print">
+            <button 
+                onClick={() => setZoomLevel(z => Math.max(0.5, z - 0.1))}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 font-bold"
+            >-</button>
+            <span className="text-sm font-bold min-w-[3rem] text-center">{Math.round(zoomLevel * 100)}%</span>
+            <button 
+                onClick={() => setZoomLevel(z => Math.min(2, z + 0.1))}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 font-bold"
+            >+</button>
+            
+            <div className="w-px h-6 bg-gray-300 mx-2"></div>
+            
+            <span className="text-xs font-bold text-gray-500">لاپەرە: {activePageIndex + 1} / {pages.length || 1}</span>
+        </div>
+
+        {/* Floating PDF Download Button */}
+        <button
+            onClick={downloadPDF}
+            className="fixed bottom-8 right-8 z-30 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 hover:scale-105 transition active:scale-95 no-print border-4 border-white"
+            title="داونلۆدکرنا PDF"
+        >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        </button>
+
         {sections.length === 0 && !loading && (
           <div className="max-w-3xl mx-auto mt-20 p-8 md:p-12 bg-white rounded-[40px] shadow-2xl border border-white no-print text-center">
             <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-6">چێکرنا مەلزەمێ ب شێوازەکێ مودرێن</h2>
@@ -353,7 +402,12 @@ const App: React.FC = () => {
           </div>
         )}
 
-        <div className="flex flex-col items-center pb-20" id="malzama-print-area">
+        {/* Printable Area with Zoom Transform */}
+        <div 
+            className="flex flex-col items-center pb-32 transition-transform duration-200 origin-top" 
+            id="malzama-print-area"
+            style={{ transform: `scale(${zoomLevel})` }}
+        >
           {pages.map((pageSections, i) => (
             <Page 
               key={i}
