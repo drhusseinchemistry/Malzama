@@ -298,6 +298,7 @@ const App: React.FC = () => {
   };
 
   const downloadPDF = () => {
+    // Native print is the best for vector quality
     window.print();
   };
 
