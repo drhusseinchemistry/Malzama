@@ -2,7 +2,6 @@
   "name": "Modern Malzama Creator",
   "description": "An AI-powered application to create professional, modern educational materials with automatic pagination, AI image generation, and intelligent text wrapping.",
   "requestFramePermissions": [
-    "camera",
-    "microphone"
+    "camera"
   ]
 }

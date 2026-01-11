@@ -5,24 +5,14 @@ export enum PaperSize {
   Letter = 'Letter'
 }
 
-export interface FloatingItem {
+export interface FloatingImage {
   id: string;
+  src: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  rotation: number;
   pageIndex: number;
-}
-
-export interface FloatingImage extends FloatingItem {
-  src: string;
-}
-
-export interface FloatingText extends FloatingItem {
-  content: string;
-  fontSize: number;
-  color: string;
 }
 
 export interface MalzamaContent {
