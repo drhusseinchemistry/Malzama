@@ -9,8 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
-    <!-- Load html2pdf library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body {
             font-family: 'Vazirmatn', sans-serif;
@@ -24,26 +22,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* PDF Generation Mode Styles */
-        /* These styles apply when we add the 'pdf-mode' class during download */
-        body.pdf-mode .malzama-page-container {
-            margin: 0 !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            /* Ensure exact A4 rendering without gaps */
-            page-break-after: always;
-        }
-        
-        body.pdf-mode #malzama-print-area {
-            gap: 0 !important;
-            padding: 0 !important;
-        }
-
-        body.pdf-mode .no-print {
-            display: none !important;
-        }
-
-        /* Standard Print Styles (Fallback) */
+        /* PRINT STYLES - Optimized for Native Browser Print */
         @media print {
             @page {
                 size: A4 portrait;
@@ -51,70 +30,77 @@
             }
             
             html, body {
-                width: 100%;
+                width: 210mm;
                 height: 100%;
                 margin: 0 !important;
                 padding: 0 !important;
-                overflow: visible !important;
                 background: white;
             }
 
+            /* Hide everything that isn't the content */
             body * {
                 visibility: hidden;
             }
 
+            /* Reset Parent Layouts to avoid flex/centering issues */
             #root, main, .flex, .h-screen, .overflow-y-auto, .overflow-hidden {
-                position: static !important;
                 display: block !important;
+                position: static !important;
                 overflow: visible !important;
                 height: auto !important;
                 width: auto !important;
-                transform: none !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                transform: none !important;
             }
 
-            #malzama-print-area, #malzama-print-area * {
-                visibility: visible;
-            }
-
+            /* The Print Area */
             #malzama-print-area {
+                visibility: visible !important;
                 position: absolute !important;
                 left: 0 !important;
                 top: 0 !important;
-                width: 100% !important;
+                width: 210mm !important; /* Force exact A4 width */
                 margin: 0 !important;
                 padding: 0 !important;
-                transform: none !important;
+                transform: none !important; /* Disable zoom */
                 display: block !important;
             }
 
+            /* Make children visible */
+            #malzama-print-area * {
+                visibility: visible;
+            }
+
+            /* Page styling for Print */
             .malzama-page-container {
                 position: relative !important;
-                width: 100% !important;
-                height: 297mm !important;
+                width: 210mm !important; /* Exact A4 width */
+                height: 297mm !important; /* Exact A4 height */
                 margin: 0 !important;
                 padding: 0 !important;
-                box-shadow: none !important;
                 border: none !important;
-                break-after: page !important;
+                box-shadow: none !important;
                 page-break-after: always !important;
+                break-after: page !important;
                 overflow: hidden !important;
                 display: block !important;
+                float: none !important;
             }
 
+            /* Ensure Colors Print */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
 
-            .no-print {
+            /* Hide UI Elements explicitly */
+            .no-print, button, .sidebar-backdrop, .fixed {
                 display: none !important;
             }
             
             img {
                 max-width: 100% !important;
-                display: block !important;
             }
         }
     </style>
