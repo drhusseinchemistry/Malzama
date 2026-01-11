@@ -10,6 +10,8 @@ interface SidebarProps {
   onAskAI: () => void;
   onDownloadPDF: () => void;
   onUploadFont: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onVoiceInput: () => void;
+  isListening: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -19,7 +21,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUploadImage,
   onAskAI, 
   onDownloadPDF, 
-  onUploadFont
+  onUploadFont,
+  onVoiceInput,
+  isListening
 }) => {
   const [localApiKey, setLocalApiKey] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -156,6 +160,16 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         {/* AI & Image Buttons */}
         <section className="space-y-3 pt-4">
+            <button 
+              onClick={onVoiceInput}
+              className={`flex items-center justify-between w-full px-5 py-4 border-2 border-red-500 text-red-600 rounded-2xl font-bold hover:bg-red-50 transition group ${isListening ? 'animate-pulse bg-red-100' : 'bg-white'}`}
+            >
+              <span>{isListening ? "گوهداریکرن..." : "نڤیسینا دەنگی (مایک)"}</span>
+              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" /></svg>
+              </div>
+            </button>
+
             <button 
               onClick={onGenerateImage}
               className="flex items-center justify-between w-full px-5 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:shadow-2xl transition group"

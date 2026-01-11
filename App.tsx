@@ -2,17 +2,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Page from './components/Page';
-import { EditorSettings, PaperSize, MalzamaSection, FloatingImage } from './types';
+import { EditorSettings, PaperSize, MalzamaSection, FloatingImage, FloatingText } from './types';
 import { processTextToSections, generateExplanatoryImage, chatWithAI } from './services/geminiService';
 
 const App: React.FC = () => {
   const [sections, setSections] = useState<MalzamaSection[]>([]);
   const [pages, setPages] = useState<MalzamaSection[][]>([]);
   const [floatingImages, setFloatingImages] = useState<FloatingImage[]>([]);
+  const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'ai', text: string}[]>([]);
+  const [isListening, setIsListening] = useState(false);
   
   // Load API Key from LocalStorage on init
   const [settings, setSettings] = useState<EditorSettings>({
@@ -103,10 +105,11 @@ const App: React.FC = () => {
                 const newImg: FloatingImage = {
                     id: Math.random().toString(),
                     src: event.target.result as string,
-                    x: 200,
-                    y: 300,
+                    x: 100,
+                    y: 100,
                     width: 300,
                     height: 300,
+                    rotation: 0,
                     pageIndex: 0
                 };
                 setFloatingImages(prev => [...prev, newImg]);
@@ -114,6 +117,50 @@ const App: React.FC = () => {
         };
         reader.readAsDataURL(file);
     }
+  };
+
+  const handleVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert("براوسەرێ تە پشتەڤانیا مایکێ ناکەت.");
+      return;
+    }
+
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.lang = 'ku-IQ'; // Support Kurdish (Iraq) or similar
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        const newText: FloatingText = {
+          id: Math.random().toString(),
+          content: transcript,
+          x: 100,
+          y: 200,
+          width: 250,
+          height: 100, // height might auto-adjust but initial box
+          rotation: 0,
+          fontSize: 18,
+          color: '#000000',
+          pageIndex: 0
+        };
+        setFloatingTexts(prev => [...prev, newText]);
+      }
+    };
+
+    recognition.start();
   };
 
   const handleAskAI = async (q: string) => {
@@ -153,6 +200,7 @@ const App: React.FC = () => {
           y: 300,
           width: 350,
           height: 350,
+          rotation: 0,
           pageIndex: 0
         };
         setFloatingImages(prev => [...prev, newImg]);
@@ -172,10 +220,20 @@ const App: React.FC = () => {
     }
   };
 
+  // Generalized updater for items (Images or Text)
+  const updateItem = (type: 'image' | 'text', id: string, updates: any) => {
+    if (type === 'image') {
+      setFloatingImages(prev => prev.map(img => img.id === id ? { ...img, ...updates } : img));
+    } else {
+      setFloatingTexts(prev => prev.map(txt => txt.id === id ? { ...txt, ...updates } : txt));
+    }
+  };
+
+  const updateSectionContent = (id: string, newContent: string) => {
+     setSections(prev => prev.map(sec => sec.id === id ? { ...sec, content: newContent } : sec));
+  };
+
   const downloadPDF = () => {
-    // Using window.print() invokes the browser's native PDF generator.
-    // This provides Vector text (selectable, crisp), perfect layout matching,
-    // and is 100% reliable compared to JS-based screenshot libraries.
     window.print();
   };
 
@@ -189,6 +247,8 @@ const App: React.FC = () => {
         onAskAI={() => setShowChat(true)}
         onDownloadPDF={downloadPDF}
         onUploadFont={handleFontUpload}
+        onVoiceInput={handleVoiceInput}
+        isListening={isListening}
       />
 
       <main className="flex-1 overflow-y-auto p-12 relative no-scrollbar bg-slate-100">
@@ -233,8 +293,9 @@ const App: React.FC = () => {
               sections={pageSections}
               settings={settings}
               floatingImages={floatingImages}
-              onImageMove={(id, x, y) => setFloatingImages(prev => prev.map(img => img.id === id ? { ...img, x, y } : img))}
-              onImageResize={(id, width, height) => setFloatingImages(prev => prev.map(img => img.id === id ? { ...img, width, height } : img))}
+              floatingTexts={floatingTexts}
+              onItemUpdate={updateItem}
+              onSectionUpdate={updateSectionContent}
             />
           ))}
         </div>
