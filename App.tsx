@@ -21,7 +21,9 @@ const App: React.FC = () => {
   // New States for User Request
   const [zoomLevel, setZoomLevel] = useState(1);
   const [activePageIndex, setActivePageIndex] = useState(0);
-  
+  const [isPrinting, setIsPrinting] = useState(false);
+  const prevZoomRef = useRef(1);
+
   // Load API Key from LocalStorage on init
   const [settings, setSettings] = useState<EditorSettings>({
     paperSize: PaperSize.A4,
@@ -297,10 +299,28 @@ const App: React.FC = () => {
      setSections(prev => prev.map(sec => sec.id === id ? { ...sec, content: newContent } : sec));
   };
 
+  // Handle PDF Download with Zoom Reset
+  useEffect(() => {
+    if (isPrinting) {
+      // 1. Zoom is now 1 (set in handleDownloadPDF)
+      // 2. Wait for render
+      const timer = setTimeout(() => {
+        window.print();
+        // 3. Restore after print dialog closes
+        setZoomLevel(prevZoomRef.current);
+        setIsPrinting(false);
+      }, 500); // Small delay to allow DOM to reflow to scale 1
+      return () => clearTimeout(timer);
+    }
+  }, [isPrinting]);
+
   const downloadPDF = () => {
-    // Native print is the best for vector quality
-    // Styles in index.html ensure correct A4 handling and remove UI elements
-    window.print();
+    // Save current zoom
+    prevZoomRef.current = zoomLevel;
+    // Set zoom to 1 to ensure 100% vector accuracy relative to paper size
+    setZoomLevel(1);
+    // Trigger print effect
+    setIsPrinting(true);
   };
 
   return (
