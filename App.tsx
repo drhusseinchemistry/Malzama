@@ -15,6 +15,8 @@ const App: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const [chatHistory, setChatHistory] = useState<{role: 'user'|'ai', text: string}[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(false); // Sidebar closed by default
+  const [micLang, setMicLang] = useState('ckb-IQ'); // Default to Kurdish
   
   // Load API Key from LocalStorage on init
   const [settings, setSettings] = useState<EditorSettings>({
@@ -119,6 +121,40 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddIcon = (svgString: string) => {
+    const blob = new Blob([svgString], {type: 'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    const newImg: FloatingImage = {
+        id: Math.random().toString(),
+        src: url,
+        x: 100,
+        y: 100,
+        width: 150,
+        height: 150,
+        rotation: 0,
+        pageIndex: 0
+    };
+    setFloatingImages(prev => [...prev, newImg]);
+    setSidebarOpen(false);
+  };
+
+  const handleAddManualText = () => {
+    const newText: FloatingText = {
+        id: Math.random().toString(),
+        content: "نڤیسینا خۆ لێرە بنڤیسە",
+        x: 100,
+        y: 200,
+        width: 250,
+        height: 100,
+        rotation: 0,
+        fontSize: 18,
+        color: '#000000',
+        pageIndex: 0
+    };
+    setFloatingTexts(prev => [...prev, newText]);
+    setSidebarOpen(false);
+  };
+
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       alert("براوسەرێ تە پشتەڤانیا مایکێ ناکەت.");
@@ -129,7 +165,7 @@ const App: React.FC = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     
-    recognition.lang = 'ku-IQ'; // Support Kurdish (Iraq) or similar
+    recognition.lang = micLang;
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -158,6 +194,12 @@ const App: React.FC = () => {
         };
         setFloatingTexts(prev => [...prev, newText]);
       }
+    };
+    
+    recognition.onerror = (event: any) => {
+        console.error("Speech error", event);
+        alert("خەلەتیا مایکێ: " + event.error);
+        setIsListening(false);
     };
 
     recognition.start();
@@ -239,7 +281,29 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f0f2f5]">
+      
+      {/* Sidebar Toggle Button (Visible when sidebar is closed) */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setSidebarOpen(true)}
+          className="fixed top-6 left-6 z-40 bg-white p-3 rounded-full shadow-lg border border-gray-200 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition no-print"
+          title="ڤەکرنا مێنویێ"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+      )}
+
+      {/* Sidebar Backdrop for Mobile/Overlay */}
+      {isSidebarOpen && (
+        <div 
+            className="fixed inset-0 bg-black/20 z-40 backdrop-blur-sm no-print"
+            onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <Sidebar 
+        isOpen={isSidebarOpen}
+        onClose={() => setSidebarOpen(false)}
         settings={settings} 
         updateSettings={(s) => setSettings(prev => ({ ...prev, ...s }))}
         onGenerateImage={createAIImage}
@@ -249,15 +313,19 @@ const App: React.FC = () => {
         onUploadFont={handleFontUpload}
         onVoiceInput={handleVoiceInput}
         isListening={isListening}
+        micLang={micLang}
+        setMicLang={setMicLang}
+        onAddIcon={handleAddIcon}
+        onAddText={handleAddManualText}
       />
 
-      <main className="flex-1 overflow-y-auto p-12 relative no-scrollbar bg-slate-100">
+      <main className="flex-1 overflow-y-auto p-4 md:p-12 relative no-scrollbar bg-slate-100 transition-all duration-300">
         {sections.length === 0 && !loading && (
-          <div className="max-w-3xl mx-auto mt-20 p-12 bg-white rounded-[40px] shadow-2xl border border-white no-print">
-            <h2 className="text-4xl font-black text-gray-900 mb-6 text-center">چێکرنا مەلزەمێ ب شێوازەکێ مودرێن</h2>
-            <p className="text-gray-500 mb-10 text-center text-lg">نڤیسینا خۆ ل ڤێرە دانێ دا مامۆستایێ زیرەک بۆتە رێک بێخیت و دیزاینەکا جوان بدەتێ.</p>
+          <div className="max-w-3xl mx-auto mt-20 p-8 md:p-12 bg-white rounded-[40px] shadow-2xl border border-white no-print text-center">
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-6">چێکرنا مەلزەمێ ب شێوازەکێ مودرێن</h2>
+            <p className="text-gray-500 mb-10 text-lg">نڤیسینا خۆ ل ڤێرە دانێ دا مامۆستایێ زیرەک بۆتە رێک بێخیت و دیزاینەکا جوان بدەتێ.</p>
             <textarea 
-              className="w-full h-80 p-8 rounded-3xl border-2 border-gray-100 focus:border-blue-500 focus:outline-none transition resize-none bg-gray-50 text-xl leading-relaxed"
+              className="w-full h-64 md:h-80 p-6 md:p-8 rounded-3xl border-2 border-gray-100 focus:border-blue-500 focus:outline-none transition resize-none bg-gray-50 text-lg md:text-xl leading-relaxed"
               placeholder="نڤیسینا خۆ ل ڤێرە بنڤیسە..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -265,7 +333,7 @@ const App: React.FC = () => {
             <div className="flex justify-center mt-10">
                 <button 
                   onClick={() => handleTextSubmit(prompt)}
-                  className="px-16 py-5 bg-blue-600 text-white rounded-2xl font-black text-xl shadow-2xl shadow-blue-200 hover:bg-blue-700 transition active:scale-95"
+                  className="px-12 md:px-16 py-4 md:py-5 bg-blue-600 text-white rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-blue-200 hover:bg-blue-700 transition active:scale-95"
                 >
                   دەستپێبکە
                 </button>
@@ -301,7 +369,7 @@ const App: React.FC = () => {
         </div>
         
         {pages.length > 0 && (
-             <div className="text-center no-print">
+             <div className="text-center no-print pb-20">
                  <button 
                     onClick={() => setSections(prev => [...prev, { id: Math.random().toString(), title: "بابەتەکێ نوو", content: "ل ڤێرە بنڤیسە..." }])}
                     className="mt-4 px-8 py-3 bg-white text-gray-900 rounded-full font-bold shadow-lg border hover:bg-gray-50 transition"

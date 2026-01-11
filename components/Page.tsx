@@ -39,6 +39,8 @@ const Page: React.FC<PageProps> = ({
   // Helper to handle dragging and resizing for both images and text
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent, type: 'image'|'text', id: string, currentX: number, currentY: number) => {
     e.stopPropagation();
+    e.preventDefault(); // CRITICAL: Prevents browser native drag behavior (ghost image)
+    
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     
@@ -46,6 +48,7 @@ const Page: React.FC<PageProps> = ({
     const startY = clientY - currentY;
 
     const move = (moveEvent: MouseEvent | TouchEvent) => {
+      moveEvent.preventDefault();
       const moveClientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : (moveEvent as MouseEvent).clientX;
       const moveClientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : (moveEvent as MouseEvent).clientY;
       onItemUpdate(type, id, { x: moveClientX - startX, y: moveClientY - startY });
@@ -60,16 +63,19 @@ const Page: React.FC<PageProps> = ({
 
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', stop);
-    window.addEventListener('touchmove', move);
+    window.addEventListener('touchmove', move, { passive: false });
     window.addEventListener('touchend', stop);
   };
 
   const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, type: 'image'|'text', id: string, currentW: number, currentH: number) => {
     e.stopPropagation();
+    e.preventDefault();
+    
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
     const move = (moveEvent: MouseEvent | TouchEvent) => {
+        moveEvent.preventDefault();
         const moveClientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : (moveEvent as MouseEvent).clientX;
         const moveClientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : (moveEvent as MouseEvent).clientY;
         const newW = Math.max(50, currentW + (moveClientX - clientX));
@@ -86,15 +92,18 @@ const Page: React.FC<PageProps> = ({
 
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', stop);
-    window.addEventListener('touchmove', move);
+    window.addEventListener('touchmove', move, { passive: false });
     window.addEventListener('touchend', stop);
   };
 
   const handleRotateStart = (e: React.MouseEvent | React.TouchEvent, type: 'image'|'text', id: string, currentRotation: number) => {
       e.stopPropagation();
+      e.preventDefault();
+
       const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
       
       const move = (moveEvent: MouseEvent | TouchEvent) => {
+          moveEvent.preventDefault();
           const moveClientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : (moveEvent as MouseEvent).clientX;
           // Simple rotation sensitivity based on horizontal drag
           const delta = moveClientX - clientX;
@@ -110,7 +119,7 @@ const Page: React.FC<PageProps> = ({
 
       window.addEventListener('mousemove', move);
       window.addEventListener('mouseup', stop);
-      window.addEventListener('touchmove', move);
+      window.addEventListener('touchmove', move, { passive: false });
       window.addEventListener('touchend', stop);
   };
 
