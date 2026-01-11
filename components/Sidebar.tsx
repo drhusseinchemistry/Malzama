@@ -22,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUploadFont
 }) => {
   const [localApiKey, setLocalApiKey] = useState('');
+  const [isOpen, setIsOpen] = useState(false); // Default to closed (Icon mode)
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync local input with settings/localStorage on mount
@@ -37,8 +38,34 @@ const Sidebar: React.FC<SidebarProps> = ({
     alert("API Key هاتە تۆمارکرن!");
   };
 
+  if (!isOpen) {
+    return (
+      <div className="no-print fixed top-6 right-6 z-50">
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="w-16 h-16 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center text-gray-900 hover:scale-110 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 group"
+          title="کرنا دیزاینەر"
+        >
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full animate-pulse border-2 border-white"></div>
+          <svg className="w-8 h-8 text-gray-700 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-80 bg-white border-l h-screen flex flex-col no-print shadow-xl z-20">
+    <div className="w-80 bg-white border-l h-screen flex flex-col no-print shadow-xl z-20 relative animate-in slide-in-from-right-10 duration-300">
+       {/* Close Button */}
+       <button 
+        onClick={() => setIsOpen(false)}
+        className="absolute top-4 left-4 p-2 bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-xl transition-all z-30"
+        title="داخستن"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+
       <div className="p-8 border-b flex items-center gap-4 bg-gray-50/50">
         <div 
             className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-inner"
