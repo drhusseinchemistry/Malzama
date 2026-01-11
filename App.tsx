@@ -298,8 +298,55 @@ const App: React.FC = () => {
   };
 
   const downloadPDF = () => {
-    // Native print is the best for vector quality
-    window.print();
+    // 100% Reliable PDF Generation using html2pdf
+    // This captures the DOM as a canvas/image, preserving all styles, images, and backgrounds exactly as seen.
+    
+    // @ts-ignore
+    if (typeof window.html2pdf === 'undefined') {
+        alert("تکایە کێمەکێ بووەستە تا کتێبخانەیا PDF بار دکەت یان ئینتەرنێتا خۆ بپشکنە.");
+        return;
+    }
+
+    const element = document.getElementById('malzama-print-area');
+    if (!element) return;
+
+    // Apply PDF-specific styles (remove gaps, resets)
+    document.body.classList.add('pdf-mode');
+    
+    // Save current transform to restore later
+    const originalTransform = element.style.transform;
+    // Reset zoom for correct capture resolution
+    element.style.transform = 'none';
+
+    setLoading(true);
+
+    const opt = {
+      margin:       0,
+      filename:     `malzama-${new Date().getTime()}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+          scale: 2, // High quality (Retina)
+          useCORS: true, // Allow cross-origin images (like from Gemini/Google)
+          logging: false,
+          scrollY: 0
+      },
+      jsPDF:        { unit: 'mm', format: settings.paperSize.toLowerCase(), orientation: 'portrait' },
+      pagebreak:    { mode: 'css', after: '.malzama-page-container' } // Prevent cutting inside pages
+    };
+
+    // @ts-ignore
+    window.html2pdf().set(opt).from(element).save().then(() => {
+        // Cleanup
+        element.style.transform = originalTransform;
+        document.body.classList.remove('pdf-mode');
+        setLoading(false);
+    }).catch((err: any) => {
+        console.error(err);
+        alert("خەلەتەک ل دەمێ دروستکرنا PDF پەیدابوو.");
+        element.style.transform = originalTransform;
+        document.body.classList.remove('pdf-mode');
+        setLoading(false);
+    });
   };
 
   return (
